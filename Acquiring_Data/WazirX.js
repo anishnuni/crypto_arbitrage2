@@ -11,18 +11,8 @@ function wazir_get_assets(ticker) {
     } else if (quote_4 == "usdt") {
         return {"base": (ticker.substring(0, ticker.length - 4)).toUpperCase(), "quote": quote_4.toUpperCase()}
     } else {
-        console.log(ticker);
-        console.log(quote_3);
-        console.log(quote_4)
         throw "Failed on " + ticker;
     }
-}
-
-
-// Return Saved_Data from get request to root+path
-async function get(root, path) {
-    const response = await axios.get(root + path);
-    return response['data'];
 }
 
 
@@ -57,6 +47,5 @@ async function update_WazirX_data() {
 
 }
 
-update_WazirX_data()
 
 module.exports = { update_WazirX_data }

@@ -4,10 +4,12 @@ const WazirX_Markets = Loader.load_orderbook("Wazir");
 const CoinDCX_Markets = Loader.load_orderbook("CoinDCX");
 const Binance_Markets = Loader.load_orderbook("Binance");
 const exchange_markets = {
-    "WazirX": WazirX_Markets,
     "CoinDCX": CoinDCX_Markets,
-    "Binance": Binance_Markets
-}; // TODO: BITTREX IS NOT HERE BECAUSE GREKKO HASNT RESPONDED
+    "WazirX": WazirX_Markets,
+    "Bittrex": Bittrex_Markets,
+    "Binance": Binance_Markets,
+};
+// TODO: BITTREX IS NOT HERE BECAUSE GREKKO HASNT RESPONDED
 
 // Find how to acquire the maximum amount of INR on Wazir
 // by:
@@ -115,15 +117,12 @@ function run_arb2_combos() {
     for (let exchange1_name of Object.keys(exchange_markets)) {
         for (let exchange2_name of Object.keys(exchange_markets)) {
             if (exchange1_name !== exchange2_name) {
-                // TODO: remove if statement in line 120
-                if (exchange1_name === "Binance" || exchange2_name === "Binance") {
-                    let exchange1 = exchange_markets[exchange1_name];
-                    let exchange2 = exchange_markets[exchange2_name];
-                    let successes = two_arbs(exchange1, exchange2, 1.15);
-                    console.log("Successes for starting with USDT on", exchange1_name, "and then sending assets to", exchange2_name);
-                    console.log(successes);
-                    console.log("");
-                }
+                let exchange1 = exchange_markets[exchange1_name];
+                let exchange2 = exchange_markets[exchange2_name];
+                let successes = two_arbs(exchange1, exchange2, 1.15);
+                console.log("Successes for starting with USDT on", exchange1_name, "and then sending assets to", exchange2_name);
+                console.log(successes);
+                console.log("");
             }
         }
     }

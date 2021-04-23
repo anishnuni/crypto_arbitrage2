@@ -22,7 +22,7 @@ function get_ordered_asks(asks) {
 function write_to_file(filename, data) {
     const file = {"last_updated": current_unix, "data": data};
     const jsonString = JSON.stringify(file);
-    fs.writeFileSync("../Saved_Data/" + filename, jsonString);
+    fs.writeFileSync("./Saved_Data/" + filename, jsonString);
 }
 
 module.exports = { get, get_ordered_bids, get_ordered_asks, write_to_file }

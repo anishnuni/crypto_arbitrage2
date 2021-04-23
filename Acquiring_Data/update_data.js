@@ -7,8 +7,9 @@ const WazirX = require('./WazirX');
 function update_all() {
     CoinDCX.update_CoinDCX_data();
     WazirX.update_WazirX_data();
-    // Bittrex.update_Bittrex_data();
-    // Binance.update_Binance_data();
+    Bittrex.update_Bittrex_data();
+    Binance.update_Binance_data();
 
 }
 
+update_all();
