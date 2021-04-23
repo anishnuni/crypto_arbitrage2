@@ -2,7 +2,12 @@ const Loader = require('./load_data');
 const Bittrex_Markets = Loader.load_orderbook("Bittrex");
 const WazirX_Markets = Loader.load_orderbook("Wazir");
 const CoinDCX_Markets = Loader.load_orderbook("CoinDCX");
-const exchange_markets = {"Bittrex": Bittrex_Markets, "WazirX": WazirX_Markets,"CoinDCX": CoinDCX_Markets}
+const Binance_Markets = Loader.load_orderbook("Binance");
+const exchange_markets = {
+    "WazirX": WazirX_Markets,
+    "CoinDCX": CoinDCX_Markets,
+    "Binance": Binance_Markets
+}; // TODO: BITTREX IS NOT HERE BECAUSE GREKKO HASNT RESPONDED
 
 // Find how to acquire the maximum amount of INR on Wazir
 // by:
@@ -23,7 +28,7 @@ function max_INR(n_USDT) {
 // Then convert that to any asset X on Exchange1.
 // Then send asset X over to Exchange2 and sell it for some asset Y
 // Then send asset Y back to Exchange1 and sell it for USDT.
-// required return = 1.05 means you need a 5% margin
+// req_return = 1.05 means you need a 5% margin for the trade to be considered successful
 function two_arbs(Exchange1_Markets, Exchange2_Markets, req_return) {
     let successes = [];
     const start_USDT = 1000; // CAN CHANGE
@@ -110,12 +115,15 @@ function run_arb2_combos() {
     for (let exchange1_name of Object.keys(exchange_markets)) {
         for (let exchange2_name of Object.keys(exchange_markets)) {
             if (exchange1_name !== exchange2_name) {
-                let exchange1 = exchange_markets[exchange1_name];
-                let exchange2 = exchange_markets[exchange2_name];
-                let successes = two_arbs(exchange1, exchange2, 1.01);
-                console.log("Successes for starting with USDT on", exchange1_name, "and then sending assets to", exchange2_name);
-                console.log(successes);
-                console.log("");
+                // TODO: remove if statement in line 120
+                if (exchange1_name === "Binance" || exchange2_name === "Binance") {
+                    let exchange1 = exchange_markets[exchange1_name];
+                    let exchange2 = exchange_markets[exchange2_name];
+                    let successes = two_arbs(exchange1, exchange2, 1.15);
+                    console.log("Successes for starting with USDT on", exchange1_name, "and then sending assets to", exchange2_name);
+                    console.log(successes);
+                    console.log("");
+                }
             }
         }
     }

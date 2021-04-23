@@ -17,8 +17,7 @@ async function update_CoinDCX_data() {
     let valid_pairs = [];
     for (let pair of pairs) {
         if (!['B', 'HB', 'H'].includes(pair.split("-")[0])) {
-            // valid_pairs are those that actually are trading
-            // on CoinDCX, not just those
+            // valid_pairs are those that actually are trading on CoinDCX, not just those
             // that are just connections to the orderbook of Binance or Huobi
             valid_pairs.push(pair);
         }
@@ -46,5 +45,6 @@ async function update_CoinDCX_data() {
     }
     Utils.write_to_file("CoinDCX_Orderbooks.json", orderbooks);
 }
+
 
 module.exports = { update_CoinDCX_data }
