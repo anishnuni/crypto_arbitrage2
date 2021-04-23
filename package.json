@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "axios": "^0.21.1",
+    "ccxt": "^1.48.45",
+    "coingecko-api": "^1.0.10",
+    "request": "^2.88.2"
+  }
+}
