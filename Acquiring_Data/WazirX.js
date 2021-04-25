@@ -16,10 +16,13 @@ function wazir_get_assets(ticker) {
 }
 
 
-async function update_WazirX_data() {
+async function update_wazirx_data() {
     const Wazir_overview = await Utils.get(Wazir_root, "/market-status");
     const tradeable_markets = Wazir_overview["markets"].filter((market) => (market["status"] === "active"));
-    const tradeable_tickers = tradeable_markets.map((market) => ({"quote": market["quoteMarket"], "base": market["baseMarket"]}));
+    const tradeable_tickers = tradeable_markets.map((market) => (
+        {"quote": market["quoteMarket"].toUpperCase(),
+          "base": market["baseMarket"].toUpperCase()
+        }));
     const Wazir_assets = Wazir_overview["assets"];
 
     let orderbooks = [];
@@ -27,7 +30,7 @@ async function update_WazirX_data() {
     for (let ticker of tradeable_tickers) {
         try {
             let symbol = ticker['base'] + ticker['quote'];
-            let response = await Utils.get(Wazir_root, "/depth?market=" + symbol)
+            let response = await Utils.get(Wazir_root, "/depth?market=" + symbol.toLowerCase());
             let market = ticker;
 
             let bids = [];
@@ -43,16 +46,14 @@ async function update_WazirX_data() {
             market['bids'] = Utils.get_ordered_bids(bids);
             market['asks'] = Utils.get_ordered_asks(asks);
             orderbooks.push(market);
-
-            i++;
-            let percent_done = ((100 * i / tradeable_tickers.length).toFixed(3));
-            console.log(percent_done.toString() + "%", "done with WazirX Saved_Data");
         } catch {
             console.log("Encountered issue when acquiring a WazirX Market");
         }
+        i++;
+        Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");
     }
-    Utils.write_to_file("WazirX_Orderbooks.json", orderbooks);
+    Utils.write_to_file("WazirX_Orderbooks.json", orderbooks, true);
 }
 
 
-module.exports = { update_WazirX_data }
+module.exports = { update_wazirx_data }

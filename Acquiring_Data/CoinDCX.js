@@ -12,13 +12,14 @@ function coindcx_get_assets(ticker) {
 
 
 // download data for CoinDCX markets
-async function update_CoinDCX_data() {
+async function update_coindcx_data() {
     const markets = await Utils.get("https://api.coindcx.com", "/exchange/v1/markets_details");
-    const pairs = markets.map(market => market['pair']);
+    const tradeable_markets = markets.filter((market) => (market["status"] === "active"))
+    const tradeable_pairs = tradeable_markets.map(market => market['pair']);
     let orderbooks = [];
 
     let valid_pairs = [];
-    for (let pair of pairs) {
+    for (let pair of tradeable_pairs) {
         if (!['B', 'HB', 'H'].includes(pair.split("-")[0])) {
             // valid_pairs are those that actually are trading on CoinDCX, not just those
             // that are just connections to the orderbook of Binance or Huobi
@@ -42,12 +43,12 @@ async function update_CoinDCX_data() {
         market['bids'] = Utils.get_ordered_bids(bids);
         market['asks'] = Utils.get_ordered_asks(asks);
         orderbooks.push(market);
+
         i++;
-        let percent_done = ((100 * i / valid_pairs.length).toFixed(3));
-        console.log(percent_done.toString() + "%", "done with CoinDCX Saved_Data");
+        Utils.log_exchange_progress(i / tradeable_markets.length, "CoinDCX");
     }
-    Utils.write_to_file("CoinDCX_Orderbooks.json", orderbooks);
+    Utils.write_to_file("CoinDCX_Orderbooks.json", orderbooks, true);
 }
 
 
-module.exports = { update_CoinDCX_data, coindcx_get_assets }
+module.exports = { update_coindcx_data, coindcx_get_assets }

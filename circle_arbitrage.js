@@ -87,7 +87,8 @@ function log_plays() {
     Arb_Utils.print_exchange_updated_times(exchange_names);
 
     const sizing_USD = 1000;
-    // update_BC_matrix_Data(sizing_USD);
+    update_BC_matrix_Data(sizing_USD);
+
     const successes = find_all_circle_arbs(2, sizing_USD, 1.05, false, false);
     for (let play of successes) {
         console.log(play);

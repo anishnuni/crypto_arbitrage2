@@ -7,18 +7,19 @@ const binance_root = "https://api.binance.com/api/v3";
 
 // Uses Binance API and loops through
 // Took 6 minutes and 17 seconds on Sunday April 25th 3:30 am
-async function update_Binance_data() {
+async function update_binance_data() {
     const exchangeInfo = await Utils.get(binance_root, "/exchangeInfo");
     // TODO fix after checking msg when it is not broken.
     const tradeable_markets = exchangeInfo["symbols"].filter((market) => (market["status"] === "TRADING"));
-    const tradeable_tickers = tradeable_markets.map((market) => ({"quote": market["quoteAsset"], "base": market["baseAsset"]}));
+    const tradeable_tickers = tradeable_markets.map((market) =>
+        ({"quote": market["quoteAsset"].toUpperCase(),
+           "base": market["baseAsset"].toUpperCase()
+        }));
 
     let orderbooks = [];
     let i = 0;
     for (let ticker of tradeable_tickers) {
-        let market = {};
-        market['base'] = ticker['base'].toUpperCase();
-        market['quote'] = ticker['quote'].toUpperCase();
+        let market = ticker;
         try {
             let orderbook = await Utils.get(binance_root, "/depth?symbol=" + market['base'] + market['quote']);
             if (orderbook['code'] !== -1121) {
@@ -38,13 +39,11 @@ async function update_Binance_data() {
             console.log("Failed on get", binance_root, "/depth?symbol=" + market['base'] + market['quote']);
         }
         i++;
-        let percent_done = ((100 * i / tradeable_tickers.length).toFixed(3));
-        console.log(percent_done.toString() + "%", "done with Binance Data");
+        Utils.log_exchange_progress(i / tradeable_markets.length, "Binance");
     }
-    Utils.write_to_file("Binance_Orderbooks.json", orderbooks);
+    Utils.write_to_file("Binance_Orderbooks.json", orderbooks, true);
 }
 
-update_Binance_data();
 
 // Uses CCXT and loops through markets
 async function update_Binance_data1() {
@@ -71,7 +70,7 @@ async function update_Binance_data1() {
         let percent_done = ((100 * i / responses.length).toFixed(3));
         console.log(percent_done.toString() + "%", "done with Binance Data");
     }
-    Utils.write_to_file("Binance_Orderbooks.json", orderbooks);
+    Utils.write_to_file("Binance_Orderbooks.json", orderbooks, true);
 }
 
 
@@ -92,7 +91,7 @@ async function update_Binance_data2() {
     let gets2 = get_orderbook_queries(tickers2);
     let orderbooks2 = await get_orderbooks_given_queries(responses2, gets2)
 
-    Utils.write_to_file("Binance_Orderbooks.json", orderbooks1.concat(orderbooks2));
+    Utils.write_to_file("Binance_Orderbooks.json", orderbooks1.concat(orderbooks2), true);
 }
 
 
@@ -137,4 +136,4 @@ async function get_orderbooks_given_queries(tickers, queries) {
 }
 
 
-module.exports = { update_Binance_data }
+module.exports = { update_binance_data: update_binance_data }
