@@ -30,7 +30,7 @@ async function update_ftx_data() {
         orderbooks.push(to_save);
 
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "FTX");
+        Utils.log_exchange_progress(i / tradeable_spot_markets.length, "FTX");
     }
     Utils.write_to_file("FTX_Orderbooks.json", orderbooks, true);
 }

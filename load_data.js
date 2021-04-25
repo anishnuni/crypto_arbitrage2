@@ -6,6 +6,9 @@ const Bittrex_Markets = load_data("Bittrex_Orderbooks.json");
 const WazirX_Markets = load_data("WazirX_Orderbooks.json");
 const CoinDCX_Markets = load_data("CoinDCX_Orderbooks.json");
 const Binance_Markets = load_data("Binance_Orderbooks.json");
+const AAX_Markets = load_data("AAX_Orderbooks.json");
+const FTX_Markets = load_data("FTX_Orderbooks.json");
+const GoPax_Markets = load_data("GoPax_Orderbooks.json");
 
 // load all markets for exchange_name from file
 function load_data(filename) {
@@ -96,27 +99,27 @@ function total_volume_asks(bids) {
     return quantity;
 }
 
-// return best way to convert asset1_n of asset1 into asset2
+// return best way to convert start_asset_n of start_asset into end_asset
 // given the different sets of markets for different exchanges in the
 // exchanges array.
-function best_conversion(exchanges, exchange_names, asset1, asset1_n, asset2) {
-    let best_option = {"exchange": "None", "asset1": asset1, "asset1_n": asset1_n, "asset2": asset2, "asset2_n": 0};
-    if (asset1 === asset2) {
-        best_option["asset2_n"] = asset1_n
+function best_conversion(exchanges, exchange_names, start_asset, start_asset_n, end_asset) {
+    let best_option = {"exchange": "None", "start_asset": start_asset, "start_asset_n": start_asset_n, "end_asset": end_asset, "end_asset_n": 0};
+    if (start_asset === end_asset) {
+        best_option["end_asset_n"] = start_asset_n
         return best_option;
     }
     let i = 0;
     for (let exchange of exchanges) {
-        let market1 = get_market(exchange, asset1, asset2);
-        let market2 = get_market(exchange, asset2, asset1);
+        let market1 = get_market(exchange, start_asset, end_asset);
+        let market2 = get_market(exchange, end_asset, start_asset);
 
-        let asset2_n_1 = conversion(market1, asset1_n, asset1);
-        let asset2_n_2 = conversion(market2, asset1_n, asset1);
+        let end_asset_n_1 = conversion(market1, start_asset_n, start_asset);
+        let end_asset_n_2 = conversion(market2, start_asset_n, start_asset);
 
-        let asset2_n = Math.max(asset2_n_1, asset2_n_2);
-        if (asset2_n > best_option['asset2_n']) {
+        let end_asset_n = Math.max(end_asset_n_1, end_asset_n_2);
+        if (end_asset_n > best_option['end_asset_n']) {
             best_option["exchange"] = exchange_names[i];
-            best_option["asset2_n"] = asset2_n;
+            best_option["end_asset_n"] = end_asset_n;
         }
         i++
     }
@@ -135,18 +138,18 @@ function get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, asset
     const USD_alternatives = ["USD", "USDT", "BUSD", "USDC", "DAI", "BUSD", "TUSD"];
     let asset_n = [];
     for (let USD_coin of USD_alternatives) {
-        let n = best_conversion(exchanges, exchange_names, USD_coin, sizing_USD, asset)['asset2_n'];
+        let n = best_conversion(exchanges, exchange_names, USD_coin, sizing_USD, asset)['end_asset_n'];
         asset_n.push(n);
     }
 
-    const BTC_price = best_conversion(exchanges, exchange_names, "BTC", 0.5, "USDT")['asset2_n'] / 0.5;
-    const ETH_price = best_conversion(exchanges, exchange_names, "ETH", 1, "USDT")['asset2_n'];
+    const BTC_price = best_conversion(exchanges, exchange_names, "BTC", 0.5, "USDT")['end_asset_n'] / 0.5;
+    const ETH_price = best_conversion(exchanges, exchange_names, "ETH", 1, "USDT")['end_asset_n'];
 
     // How much of the asset will you get if you convert sizing_USD worth of BTC into the asset
-    let n_BTC = best_conversion(exchanges, exchange_names, "BTC", sizing_USD / BTC_price, asset)['asset2_n'];
+    let n_BTC = best_conversion(exchanges, exchange_names, "BTC", sizing_USD / BTC_price, asset)['end_asset_n'];
 
     // How much of the asset will you get if you convert sizing_USD worth of ETH into the asset
-    let n_ETH = best_conversion(exchanges, exchange_names, "ETH", sizing_USD / ETH_price, asset)['asset2_n'];
+    let n_ETH = best_conversion(exchanges, exchange_names, "ETH", sizing_USD / ETH_price, asset)['end_asset_n'];
 
     asset_n.push(n_BTC);
     asset_n.push(n_ETH);
@@ -166,18 +169,18 @@ function get_best_conversion_matrix(exchanges, exchange_names, sizing_USD, log_p
     let bc_matrix = {};
     let n = known_assets.length ** 2;
     let i = 0;
-    for (let asset1 of known_assets) {
-        bc_matrix[asset1] = {};
+    for (let start_asset of known_assets) {
+        bc_matrix[start_asset] = {};
         try {
-            // the ratio is calculated assuming you are selling less than 1.2*sizing_USD worth of asset1
-            // this is why we are setting asset1_n in the following way
-            let asset1_n = 1.2 * get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, asset1);
+            // the ratio is calculated assuming you are selling less than 1.2*sizing_USD worth of start_asset
+            // this is why we are setting start_asset_n in the following way
+            let start_asset_n = 1.2 * get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, start_asset);
 
-            for (let asset2 of known_assets) {
-                let best = best_conversion(exchanges, exchange_names, asset1, asset1_n, asset2);
-                bc_matrix[asset1][asset2] = best["asset2_n"] / best["asset1_n"];
+            for (let end_asset of known_assets) {
+                let best = best_conversion(exchanges, exchange_names, start_asset, start_asset_n, end_asset);
+                bc_matrix[start_asset][end_asset] = best["end_asset_n"] / best["start_asset_n"];
                 // How many of Asset 2 you can get for Asset 1
-                // given that you are trying to sell less than asset1_n of Asset 1
+                // given that you are trying to sell less than start_asset_n of Asset 1
                 i++;
                 let percent_done = ((100 * i / n).toFixed(3));
                 if (log_progress) {
@@ -185,11 +188,11 @@ function get_best_conversion_matrix(exchanges, exchange_names, sizing_USD, log_p
                 }
             }
         } catch {
-            // Above we couldn't figure out the price of asset1
+            // Above we couldn't figure out the price of start_asset
             // This probably means that it is super illiquid and we can't
             // trade even sizing_USD worth of it
-            for (let asset2 of known_assets) {
-                bc_matrix[asset1][asset2] = 0;
+            for (let end_asset of known_assets) {
+                bc_matrix[start_asset][end_asset] = 0;
             }
             i += known_assets.length;
             let percent_done = ((100 * i / n).toFixed(3));
@@ -215,16 +218,23 @@ function load_all_exchanges() {
         "CoinDCX": CoinDCX_Markets,
         "WazirX": WazirX_Markets,
         "Bittrex": Bittrex_Markets,
-        "Binance": Binance_Markets
+        "Binance": Binance_Markets,
+        "AAX": AAX_Markets,
+        "FTX": FTX_Markets,
+        "GoPax": GoPax_Markets
     };
 }
 
 
 function load_all_tradeable_exchanges() {
-    return {"CoinDCX": CoinDCX_Markets,
+    return {
+        "CoinDCX": CoinDCX_Markets,
         "WazirX": WazirX_Markets,
         "Bittrex": Bittrex_Markets,
-        "Binance": Binance_Markets
+        "Binance": Binance_Markets,
+        "AAX": AAX_Markets,
+        "FTX": FTX_Markets,
+        "GoPax": GoPax_Markets
     };
 }
 

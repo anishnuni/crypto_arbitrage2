@@ -10,7 +10,7 @@ async function get(root, path) {
 
 
 function log_exchange_progress(percent, exchange_name) {
-    if ((Math.round(percent*100) % 10) === 0) {
+    if (((Math.round(percent*100) % 10) === 0) || ((Math.round(percent*100) % 10) === 5)) {
         let percent_done = ((100 * percent).toFixed(3));
         console.log(percent_done.toString() + "%", "done with", exchange_name, "Data");
     }

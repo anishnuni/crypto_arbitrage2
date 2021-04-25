@@ -1,19 +1,5 @@
 const Utils = require('./Utils');
-const axios = require('axios');
 const Wazir_root = "https://api.wazirx.com/api/v2";
-
-// get base and quote asset from the WazirX ticker name
-function wazir_get_assets(ticker) {
-    let quote_3 = ticker.substring(ticker.length - 3, ticker.length);
-    let quote_4 = ticker.substring(ticker.length - 4, ticker.length);
-    if (["btc", "inr", "wrx"].includes(quote_3)) {
-        return {"base": (ticker.substring(0, ticker.length - 3)).toUpperCase(), "quote": quote_3.toUpperCase()}
-    } else if (quote_4 == "usdt") {
-        return {"base": (ticker.substring(0, ticker.length - 4)).toUpperCase(), "quote": quote_4.toUpperCase()}
-    } else {
-        throw "Failed on " + ticker;
-    }
-}
 
 
 async function update_wazirx_data() {
@@ -47,7 +33,7 @@ async function update_wazirx_data() {
             market['asks'] = Utils.get_ordered_asks(asks);
             orderbooks.push(market);
         } catch {
-            console.log("Encountered issue when acquiring a WazirX Market");
+            console.log("Encountered issue when acquiring a WazirX Market", symbol);
         }
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");
