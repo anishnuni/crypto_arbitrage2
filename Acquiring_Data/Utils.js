@@ -8,10 +8,12 @@ async function get(root, path) {
     return response['data'];
 }
 
+
 // order bids highest rate first to lowest rate last
 function get_ordered_bids(bids) {
     return bids.sort(function(bid1, bid2) {return bid2['rate'] - bid1['rate']});
 }
+
 
 // order asks lowest rate first to highest rate last
 function get_ordered_asks(asks) {
@@ -22,7 +24,16 @@ function get_ordered_asks(asks) {
 function write_to_file(filename, data) {
     const file = {"last_updated": current_unix, "data": data};
     const jsonString = JSON.stringify(file);
-    fs.writeFileSync("./Saved_Data/" + filename, jsonString);
+    fs.writeFileSync("../Saved_Data/" + filename, jsonString);
 }
 
-module.exports = { get, get_ordered_bids, get_ordered_asks, write_to_file }
+
+function set_union(set1, set2) {
+    let union = set1;
+    for (let val of set2) {
+        union.add(val);
+    }
+    return union;
+}
+
+module.exports = { get, get_ordered_bids, get_ordered_asks, write_to_file, set_union }

@@ -36,4 +36,4 @@ async function update_Bittrex_data() {
 }
 
 
-module.exports = { update_Bittrex_data }
+module.exports = { update_Bittrex_data, bittrex_get_assets }

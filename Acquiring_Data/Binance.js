@@ -2,9 +2,52 @@ const ccxt = require('ccxt');
 const Utils = require('./Utils');
 
 const binance = new ccxt.binance({'enableRateLimit': true});
+const binance_root = "https://api.binance.com/api/v3";
 
 
-async function update_Binance_data_alternate() {
+// Uses Binance API and loops through
+// Took 6 minutes and 17 seconds on Sunday April 25th 3:30 am
+async function update_Binance_data() {
+    const exchangeInfo = await Utils.get(binance_root, "/exchangeInfo");
+    // TODO fix after checking msg when it is not broken.
+    const tradeable_markets = exchangeInfo["symbols"].filter((market) => (market["status"] === "TRADING"));
+    const tradeable_tickers = tradeable_markets.map((market) => ({"quote": market["quoteAsset"], "base": market["baseAsset"]}));
+
+    let orderbooks = [];
+    let i = 0;
+    for (let ticker of tradeable_tickers) {
+        let market = {};
+        market['base'] = ticker['base'].toUpperCase();
+        market['quote'] = ticker['quote'].toUpperCase();
+        try {
+            let orderbook = await Utils.get(binance_root, "/depth?symbol=" + market['base'] + market['quote']);
+            if (orderbook['code'] !== -1121) {
+                let bids = [];
+                let asks = [];
+                for (let bid of orderbook['bids']) {
+                    bids.push({"quantity": parseFloat(bid[1]), "rate": parseFloat(bid[0])});
+                }
+                for (let ask of orderbook['asks']) {
+                    asks.push({"quantity": parseFloat(ask[1]), "rate": parseFloat(ask[0])});
+                }
+                market['bids'] = Utils.get_ordered_bids(bids);
+                market['asks'] = Utils.get_ordered_asks(asks);
+                orderbooks.push(market);
+            }
+        } catch (error) {
+            console.log("Failed on get", binance_root, "/depth?symbol=" + market['base'] + market['quote']);
+        }
+        i++;
+        let percent_done = ((100 * i / tradeable_tickers.length).toFixed(3));
+        console.log(percent_done.toString() + "%", "done with Binance Data");
+    }
+    Utils.write_to_file("Binance_Orderbooks.json", orderbooks);
+}
+
+update_Binance_data();
+
+// Uses CCXT and loops through markets
+async function update_Binance_data1() {
     let responses = await binance.fetchMarkets();
     let orderbooks = [];
     let i = 0;
@@ -25,15 +68,15 @@ async function update_Binance_data_alternate() {
         market['asks'] = Utils.get_ordered_asks(asks);
         orderbooks.push(market);
         i++;
-        console.log(market);
         let percent_done = ((100 * i / responses.length).toFixed(3));
         console.log(percent_done.toString() + "%", "done with Binance Data");
     }
-    Utils.write_to_file(name + "_Orderbooks.json", orderbooks);
+    Utils.write_to_file("Binance_Orderbooks.json", orderbooks);
 }
 
 
-async function update_Binance_data() {
+// Uses CCXT and batches together calls
+async function update_Binance_data2() {
     const responses = await binance.fetchMarkets();
     const tickers = responses.map(response => response['symbol']);
 
@@ -92,5 +135,6 @@ async function get_orderbooks_given_queries(tickers, queries) {
         return [];
     }
 }
+
 
 module.exports = { update_Binance_data }

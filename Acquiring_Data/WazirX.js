@@ -43,7 +43,7 @@ async function update_WazirX_data() {
             console.log("Encountered issue when acquiring a WazirX Market");
         }
     }
-    Utils.write_to_file("Wazir_Orderbooks.json", orderbooks);
+    Utils.write_to_file("WazirX_Orderbooks.json", orderbooks);
 
 }
 

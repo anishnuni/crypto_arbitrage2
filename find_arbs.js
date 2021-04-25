@@ -1,15 +1,9 @@
 const Loader = require('./load_data');
-const Bittrex_Markets = Loader.load_orderbook("Bittrex");
-const WazirX_Markets = Loader.load_orderbook("Wazir");
-const CoinDCX_Markets = Loader.load_orderbook("CoinDCX");
-const Binance_Markets = Loader.load_orderbook("Binance");
-const exchange_markets = {
-    "CoinDCX": CoinDCX_Markets,
-    "WazirX": WazirX_Markets,
-    "Bittrex": Bittrex_Markets,
-    "Binance": Binance_Markets,
-};
-// TODO: BITTREX IS NOT HERE BECAUSE GREKKO HASNT RESPONDED
+const exchange_markets = Loader.load_all_exchanges();
+const Bittrex_Markets = exchange_markets["Bittrex"];
+const WazirX_Markets = exchange_markets["WazirX"];
+const CoinDCX_Markets = exchange_markets["CoinDCX"];
+const Binance_Markets = exchange_markets["Binance"];
 
 // Find how to acquire the maximum amount of INR on Wazir
 // by:
@@ -41,14 +35,14 @@ function two_arbs(Exchange1_Markets, Exchange2_Markets, req_return) {
     for (let USDT_market of Exchange1_USDT_Markets) {
 
         try {
-            let asset_X = get_asset_2(USDT_market, "USDT");
+            let asset_X = Loader.get_asset_2(USDT_market, "USDT");
             let X_n = Loader.conversion(USDT_market, start_USDT, "USDT");
             // console.log(USDT_market, asset_X, X_n);
             let Exchange2_X_Markets = Loader.get_markets(Exchange2_Markets, asset_X);
 
             // Loop through all asset X pairs on Wazir
             for (let X_market of Exchange2_X_Markets) {
-                let asset_Y = get_asset_2(X_market, asset_X);
+                let asset_Y = Loader.get_asset_2(X_market, asset_X);
                 let Y_n = Loader.conversion(X_market, X_n, asset_X);
                 // console.log(X_market);
                 // console.log(asset_X, X_n, asset_Y, Y_n);
@@ -92,14 +86,7 @@ function two_arbs(Exchange1_Markets, Exchange2_Markets, req_return) {
 }
 
 
-// Given one asset in a market get the second one
-function get_asset_2(market, asset_1) {
-    if (market['quote'] == asset_1) {
-        return market['base'];
-    } else {
-        return market['quote'];
-    }
-}
+
 
 
 function test() {

@@ -4,6 +4,9 @@ const Utils = require('./Utils');
 function coindcx_get_assets(ticker) {
     ticker = ticker.substring(2, ticker.length);
     let l = ticker.split("_");
+    if (l[0][0] === "-") {
+        l[0] = l[0].substring(1, l[0].length);
+    }
     return {"base": (l[0]).toUpperCase(), "quote": (l[1]).toUpperCase()};
 }
 
@@ -47,4 +50,4 @@ async function update_CoinDCX_data() {
 }
 
 
-module.exports = { update_CoinDCX_data }
+module.exports = { update_CoinDCX_data, coindcx_get_assets }
