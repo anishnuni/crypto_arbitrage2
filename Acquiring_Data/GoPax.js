@@ -36,7 +36,7 @@ async function update_gopax_data() {
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "GoPax");
     }
-    Utils.write_to_file("GoPax_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("GoPax/GoPax_Orderbooks.json", orderbooks, true);
 }
 
 

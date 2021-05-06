@@ -2,19 +2,29 @@ const fs = require('fs');
 // This file contains useful functions to load specific
 // information from the saved exchange order book data files.
 
-const Bittrex_Markets = load_data("Bittrex_Orderbooks.json");
-const WazirX_Markets = load_data("WazirX_Orderbooks.json");
-const CoinDCX_Markets = load_data("CoinDCX_Orderbooks.json");
-const Binance_Markets = load_data("Binance_Orderbooks.json");
-const AAX_Markets = load_data("AAX_Orderbooks.json");
-const FTX_Markets = load_data("FTX_Orderbooks.json");
-const GoPax_Markets = load_data("GoPax_Orderbooks.json");
+const Bittrex_Markets = load_all_markets("Bittrex");
+const WazirX_Markets = load_all_markets("WazirX");
+const CoinDCX_Markets = load_all_markets("CoinDCX");
+const Binance_Markets = load_all_markets("Binance");
+const AAX_Markets = load_all_markets("AAX");
+const FTX_Markets = load_all_markets("FTX");
+const GoPax_Markets = load_all_markets("GoPax");
 
-// load all markets for exchange_name from file
+// load json file from Saved_Data folder
 function load_data(filename) {
     let path = "./Saved_Data/" + filename;
     let file = JSON.parse(fs.readFileSync(path));
     return file['data'];
+}
+
+function load_all_markets(exchange_name) {
+    return load_exchange(exchange_name)['data'];
+}
+
+function load_exchange(exchange_name) {
+    let path = "./Saved_Data/" + exchange_name + "/" + exchange_name + "_Orderbooks.json";
+    let file = JSON.parse(fs.readFileSync(path));
+    return file;
 }
 
 // get all orderbooks that include the given asset
@@ -238,4 +248,4 @@ function load_all_tradeable_exchanges() {
     };
 }
 
-module.exports = { load_data, best_conversion, get_best_conversion_matrix, load_all_tradeable_exchanges, load_all_exchanges, get_n_asset_from_USD_value, get_markets, get_market, conversion, get_asset_2 }
+module.exports = { load_all_markets, load_data, load_exchange, best_conversion, get_best_conversion_matrix, load_all_tradeable_exchanges, load_all_exchanges, get_n_asset_from_USD_value, get_markets, get_market, conversion, get_asset_2 }

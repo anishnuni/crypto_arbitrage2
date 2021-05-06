@@ -40,7 +40,7 @@ async function update_FTX_orderbooks() {
         i++;
         Utils.log_exchange_progress(i / tradeable_spot_markets.length, "FTX");
     }
-    Utils.write_to_file("FTX_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("FTX/FTX_Orderbooks.json", orderbooks, true);
 }
 
 async function update_FTX_assets() {
@@ -52,7 +52,7 @@ async function update_FTX_assets() {
         console.log(to_save);
         asset_data.push(to_save);
     }
-    Utils.write_to_file("FTX_Assets.json", asset_data, true);
+    Utils.write_to_file("FTX/FTX_Assets.json", asset_data, true);
 }
 
 

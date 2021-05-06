@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Load_Data = require('./load_data');
 
 function write_to_file(filename, data) {
     const file = {"data": data};
@@ -17,8 +18,7 @@ function get_last_updated_dictionary(exchange_names) {
 
 // return the unix time of the last update to the exchange
 function last_updated(exchange) {
-    let path = "./Saved_Data/" + exchange + "_Orderbooks.json";
-    let file = JSON.parse(fs.readFileSync(path));
+    const file = Load_Data.load_exchange(exchange);
     return file['last_updated'];
 }
 

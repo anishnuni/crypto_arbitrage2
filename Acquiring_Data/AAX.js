@@ -58,7 +58,7 @@ async function update_aax_orderbooks() {
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "AAX");
     }
-    Utils.write_to_file("AAX_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("AAX/AAX_Orderbooks.json", orderbooks, true);
 }
 
 

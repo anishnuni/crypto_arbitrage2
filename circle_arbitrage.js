@@ -172,6 +172,7 @@ function test() {
     console.log(n_BTC, n_ETH);
 }
 
+
 function valid_trade(trade, blacklist) {
     if (blacklist.includes(trade["start_asset"])) {
         return false;
@@ -185,7 +186,7 @@ function valid_trade(trade, blacklist) {
 
 function tradeable(play) {
     const general_blacklist = ["ETHBEAR"];
-    const Bittrex_blacklist = ["PROS"];
+    const Bittrex_blacklist = [];
     for (let trade of play["trades"]) {
         if (!valid_trade(trade, general_blacklist)) {
             return false;
@@ -207,29 +208,38 @@ function tradeable(play) {
 
 
 function log_plays() {
-    Arb_Utils.print_exchange_updated_times(exchange_names);
-
     const sizing_USD = 1000;
     const min_successful_margin = 1.03;
 
-    update_BC_matrix_Data(sizing_USD);
+    Arb_Utils.print_exchange_updated_times(exchange_names);
 
-    const successes = find_all_four_step_arbs(sizing_USD, min_successful_margin, false, true);
-    let tradeable_success = [];
-    for (let play of successes) {
-        if (tradeable(play)) {
-            console.log(play);
-            tradeable_success.push(play);
+    const readline = require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+
+    readline.question('Do you want to update_BC_matrix_Data? Type 1 for yes and 0 for no: ', res => {
+        if (res == "1") {
+            update_BC_matrix_Data(sizing_USD);
         }
-    }
+        const successes = find_all_three_step_arbs(sizing_USD, min_successful_margin, false, true);
+        let tradeable_success = [];
+        for (let play of successes) {
+            if (tradeable(play)) {
+                console.log(play);
+                tradeable_success.push(play);
+            }
+        }
 
-    console.log("");
-    console.log("Found", tradeable_success.length, "plays fitting your criteria");
+        console.log("");
+        console.log("Found", tradeable_success.length, "plays fitting your criteria");
 
-    const params = {"sizing_USD": sizing_USD, "min_successful_margin": min_successful_margin};
-    const to_file = {"params": params, "successes": successes, "tradeable_successes": tradeable_success};
-    const filename = Date.now().toString() + "_success_trades.json";
-    Arb_Utils.write_to_file(filename, to_file);
+        const params = {"sizing_USD": sizing_USD, "min_successful_margin": min_successful_margin};
+        const to_file = {"params": params, "successes": successes, "tradeable_successes": tradeable_success};
+        const filename = Date.now().toString() + "_success_trades.json";
+        Arb_Utils.write_to_file(filename, to_file);
+    });
 }
 
 log_plays();

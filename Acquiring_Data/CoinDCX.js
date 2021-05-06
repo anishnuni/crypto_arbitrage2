@@ -47,7 +47,7 @@ async function update_coindcx_data() {
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "CoinDCX");
     }
-    Utils.write_to_file("CoinDCX_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("CoinDCX/CoinDCX_Orderbooks.json", orderbooks, true);
 }
 
 

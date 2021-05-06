@@ -38,7 +38,7 @@ async function update_wazirx_data() {
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");
     }
-    Utils.write_to_file("WazirX_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("WazirX/WazirX_Orderbooks.json", orderbooks, true);
 }
 
 

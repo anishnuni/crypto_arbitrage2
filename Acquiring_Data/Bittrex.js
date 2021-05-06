@@ -42,7 +42,7 @@ async function update_Bittrex_orderbooks() {
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "Bittrex");
     }
-    Utils.write_to_file("Bittrex_Orderbooks.json", orderbooks, true);
+    Utils.write_to_file("Bittrex/Bittrex_Orderbooks.json", orderbooks, true);
 }
 
 
@@ -51,21 +51,32 @@ async function update_Bittrex_assets() {
     let asset_data = [];
     for (let asset of assets) {
         let to_save = {};
+        const network_type = get_network(asset['coinType']);
         if (asset["notice"] === "")  {
-            to_save = {"symbol": asset["symbol"], "deposits_active": true, "withdrawals_active": true};
+            to_save = {"symbol": asset["symbol"], "network": network_type, "deposits_active": true, "withdrawals_active": true};
         } else {
-            if (asset["notice"].includes("Deposits and withdrawals are temporarily offline.")) {
-                to_save = {"symbol": asset["symbol"], "deposits_active": false, "withdrawals_active": false};
+            if (asset["notice"].includes("Deposits and withdrawals are temporarily offline")) {
+                to_save = {"symbol": asset["symbol"], "network": network_type, "deposits_active": false, "withdrawals_active": false};
             } else {
                 if (asset["status"] === "ONLINE") {
-                    to_save = {"symbol": asset["symbol"], "deposits_active": true, "withdrawals_active": true};
+                    to_save = {"symbol": asset["symbol"], "network": network_type, "deposits_active": true, "withdrawals_active": true};
                 }
             }
         }
         asset_data.push(to_save);
     }
-    Utils.write_to_file("Bittrex_Assets.json", asset_data, true)
+    Utils.write_to_file("Bittrex/Bittrex_Assets.json", asset_data, true)
 }
 
+
+function get_network(coin_type) {
+    if (coin_type == "ETH_CONTRACT") {
+        return "ETH";
+    } else if (coin_type == "STELLAR") {
+        return "XLM";
+    } else {
+        return "UNKNOWN";
+    }
+}
 
 module.exports = { update_bittrex_data, bittrex_get_assets }

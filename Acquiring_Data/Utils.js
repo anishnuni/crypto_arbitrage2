@@ -31,7 +31,7 @@ function get_ordered_asks(asks) {
 function write_to_file(filename, data, log_finished_exchange) {
     const file = {"last_updated": current_unix, "data": data};
     const jsonString = JSON.stringify(file);
-    fs.writeFileSync("../Saved_Data/" + filename, jsonString);
+    fs.writeFileSync("./Saved_Data/" + filename, jsonString);
     if (log_finished_exchange) {
         console.log("");
         console.log("Finished", filename);
