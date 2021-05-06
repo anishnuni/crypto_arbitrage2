@@ -50,7 +50,7 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
     const tradeable_assets = Object.keys(valid_trades).filter(asset => (valid_trades[asset].length > 0));
     let successes = []
 
-    for (let start_asset of tradeable_assets) {
+    for (let start_asset of ["USDT"]) {
         try {
             let start_asset_start_n = Loader.get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, start_asset);
             // list of possible asset2s (only possible if it can be converted back into start_asset)
@@ -105,7 +105,7 @@ function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_BC_matri
     const tradeable_assets = Object.keys(valid_trades).filter(asset => (valid_trades[asset].length > 0));
     let successes = []
 
-    for (let start_asset of tradeable_assets) {
+    for (let start_asset of ["USDT"]) {
         try {
             let start_asset_start_n = Loader.get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, start_asset);
             // list of possible asset2s (only possible if it can be converted back into start_asset)
@@ -183,10 +183,48 @@ function valid_trade(trade, blacklist) {
     return true;
 }
 
+// Returns true if deposit works or asset file is not found.
+function deposit_works(exchange, asset_symbol) {
+    let assets = [];
+    try {
+        assets = Loader.load_exchange_assets(exchange);
+    } catch {
+        return true;
+    }
+    let matching_assets = assets.filter((asset) => (asset['symbol'] === asset_symbol));
+    for (let asset of matching_assets) {
+        if (asset["deposits_active"]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// Returns true if withdrawal works or asset file is not found.
+function withdrawal_works(exchange, asset_symbol) {
+    let assets = [];
+    try {
+        assets = Loader.load_exchange_assets(exchange);
+    } catch {
+        return true;
+    }
+    let matching_assets = assets.filter((asset) => (asset['symbol'] === asset_symbol));
+    for (let asset of matching_assets) {
+        if (asset["withdrawals_active"]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 
 function tradeable(play) {
     const general_blacklist = ["ETHBEAR"];
     const Bittrex_blacklist = [];
+    // Checking that the play doesn't use any blacklisted assets
     for (let trade of play["trades"]) {
         if (!valid_trade(trade, general_blacklist)) {
             return false;
@@ -200,6 +238,19 @@ function tradeable(play) {
             return false;
         }
     }
+
+    // Checking that the deposits and withdrawals can actually be executed
+    for (let i = 0; i < (play["trades"].length - 1); i++) {
+        if (play["trades"][i]['exchange'] !== play["trades"][i + 1]['exchange']) {
+            if (!withdrawal_works(play["trades"][i]['exchange'], play["trades"][i]['end_asset'])) {
+                return false;
+            }
+            if (!deposit_works(play["trades"][i + 1]['exchange'], play["trades"][i + 1]['start_asset'])) {
+                return false;
+            }
+        }
+    }
+
     if (play["trades"][0]["start_asset"] === "INR") {
         return false;
     }
@@ -223,7 +274,7 @@ function log_plays() {
         if (res == "1") {
             update_BC_matrix_Data(sizing_USD);
         }
-        const successes = find_all_three_step_arbs(sizing_USD, min_successful_margin, false, true);
+        const successes = find_all_four_step_arbs(sizing_USD, min_successful_margin, false, false);
         let tradeable_success = [];
         for (let play of successes) {
             if (tradeable(play)) {

@@ -18,13 +18,19 @@ function load_data(filename) {
 }
 
 function load_all_markets(exchange_name) {
-    return load_exchange(exchange_name)['data'];
+    return load_exchange_orderbooks(exchange_name)['data'];
 }
 
-function load_exchange(exchange_name) {
+function load_exchange_orderbooks(exchange_name) {
     let path = "./Saved_Data/" + exchange_name + "/" + exchange_name + "_Orderbooks.json";
     let file = JSON.parse(fs.readFileSync(path));
     return file;
+}
+
+function load_exchange_assets(exchange_name) {
+    let path = "./Saved_Data/" + exchange_name + "/" + exchange_name + "_Assets.json";
+    let file = JSON.parse(fs.readFileSync(path));
+    return file['data'];
 }
 
 // get all orderbooks that include the given asset
@@ -248,4 +254,4 @@ function load_all_tradeable_exchanges() {
     };
 }
 
-module.exports = { load_all_markets, load_data, load_exchange, best_conversion, get_best_conversion_matrix, load_all_tradeable_exchanges, load_all_exchanges, get_n_asset_from_USD_value, get_markets, get_market, conversion, get_asset_2 }
+module.exports = { load_all_markets, load_exchange_assets, load_data, load_exchange: load_exchange_orderbooks, best_conversion, get_best_conversion_matrix, load_all_tradeable_exchanges, load_all_exchanges, get_n_asset_from_USD_value, get_markets, get_market, conversion, get_asset_2 }
