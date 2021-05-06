@@ -35,7 +35,7 @@ function log_trades(trades) {
     for (let trade of trades.slice(1, trades.length)) {
         to_log = to_log + " into " + trade["start_asset_n"] + " " + trade["start_asset"];
     }
-    to_log = to_log + " into " + trades.pop()["end_asset_n"] + " " + trades.pop()["end_asset"];
+    to_log = to_log + " into " + trades[trades.length - 1]["end_asset_n"] + " " + trades[trades.length - 1]["end_asset"];
     console.log(to_log);
 }
 
@@ -60,7 +60,7 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
                 let trade1 = Loader.best_conversion(exchanges, exchange_names, start_asset, start_asset_start_n, asset2);
                 let asset2_n = trade1["end_asset_n"];
 
-                let asset3_list = valid_trades[asset2].filter(asset3 => (valid_trades[asset3].includes(start_asset)));
+                let asset3_list = valid_trades[asset2].filter(asset => (valid_trades[asset].includes(start_asset)));
 
                 for (let asset3 of asset3_list) {
                     let trade2 = Loader.best_conversion(exchanges, exchange_names, asset2, asset2_n, asset3);
@@ -75,12 +75,12 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
                     }
 
                     let margin = start_asset_end_n / start_asset_start_n;
-
                     if (margin > min_successful_margin) {
                         // If the "trade" isn't a real trade we don't need to print it in successes
                         let real_trades = trades.filter((trade) => (trade["exchange"] !== "None"));
                         let play = {"play_stats": {"margin": margin}, "trades": real_trades};
                         successes.push(play);
+                        console.log(play);
                     }
                 }
                 if (log_all_trades) {
@@ -96,9 +96,9 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
 
 
 // ...
-function find_all_two_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix_progress, log_all_trades) {
+function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix_progress, log_all_trades) {
     const bc_matrix = Loader.load_data("bc_matrix.json");
-    console.log("Finding Two Step Arbs...");
+    console.log("Finding Four Step Arbs...");
     const valid_trades = get_valid_trades(bc_matrix);
 
     // all assets that can be traded at the given sizing_USD:
@@ -109,21 +109,44 @@ function find_all_two_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix
         try {
             let start_asset_start_n = Loader.get_n_asset_from_USD_value(exchanges, exchange_names, sizing_USD, start_asset);
             // list of possible asset2s (only possible if it can be converted back into start_asset)
-            let asset2_list = valid_trades[start_asset].filter(asset2 => (valid_trades[asset2].includes(start_asset)));
+            let asset2_list = valid_trades[start_asset];
+
             for (let asset2 of asset2_list) {
                 let trade1 = Loader.best_conversion(exchanges, exchange_names, start_asset, start_asset_start_n, asset2);
                 let asset2_n = trade1["end_asset_n"];
 
-                let trade2 = Loader.best_conversion(exchanges, exchange_names, asset2, asset2_n, start_asset);
-                let trades = [trade1, trade2];
+                let asset3_list = valid_trades[asset2];
+                for (let asset3 of asset3_list) {
+                    let trade2 = Loader.best_conversion(exchanges, exchange_names, asset2, asset2_n, asset3);
+                    let asset3_n = trade2["end_asset_n"];
 
-                if (log_all_trades) {
-                    log_trades(trades);
+                    let asset4_list = valid_trades[asset3].filter(asset => (valid_trades[asset].includes(start_asset)));
+                    for (let asset4 of asset4_list) {
+                        let trade3 = Loader.best_conversion(exchanges, exchange_names, asset3, asset3_n, asset4);
+                        let asset4_n = trade3["end_asset_n"];
+
+                        let trade4 = Loader.best_conversion(exchanges, exchange_names, asset4, asset4_n, start_asset);
+                        let start_asset_end_n = trade4["end_asset_n"];
+                        let trades = [trade1, trade2, trade3, trade4];
+
+                        if (log_all_trades) {
+                            log_trades(trades);
+                        }
+
+                        let margin = start_asset_end_n / start_asset_start_n;
+                        if (margin > min_successful_margin) {
+                            // If the "trade" isn't a real trade we don't need to print it in successes
+                            let real_trades = trades.filter((trade) => (trade["exchange"] !== "None"));
+                            let play = {"play_stats": {"margin": margin}, "trades": real_trades};
+                            successes.push(play);
+                            if (tradeable(play)) {
+                                console.log(play);
+                            }
+                        }
+                    }
                 }
-                let margin = trade2["end_asset_n"] / trade1["start_asset_n"];
-                if (margin > min_successful_margin) {
-                    let play = {"play_stats": {"margin": margin}, "trades": trades}
-                    successes.push(play)
+                if (log_all_trades) {
+                    console.log("");
                 }
             }
         } catch (error) {
@@ -132,6 +155,8 @@ function find_all_two_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix
     }
     return successes;
 }
+
+
 
 
 function test() {
@@ -147,19 +172,64 @@ function test() {
     console.log(n_BTC, n_ETH);
 }
 
+function valid_trade(trade, blacklist) {
+    if (blacklist.includes(trade["start_asset"])) {
+        return false;
+    }
+    if (blacklist.includes(trade["end_asset"])) {
+        return false;
+    }
+    return true;
+}
+
+
+function tradeable(play) {
+    const general_blacklist = ["ETHBEAR"];
+    const Bittrex_blacklist = ["PROS"];
+    for (let trade of play["trades"]) {
+        if (!valid_trade(trade, general_blacklist)) {
+            return false;
+        }
+        if (trade["exchange"] === "Bittrex") {
+            if (!valid_trade(trade, Bittrex_blacklist)) {
+                return false;
+            }
+        }
+        if (trade["end_asset"] === "INR") {
+            return false;
+        }
+    }
+    if (play["trades"][0]["start_asset"] === "INR") {
+        return false;
+    }
+    return true;
+}
+
 
 function log_plays() {
     Arb_Utils.print_exchange_updated_times(exchange_names);
 
     const sizing_USD = 1000;
-    // update_BC_matrix_Data(sizing_USD);
+    const min_successful_margin = 1.03;
 
-    const successes = find_all_three_step_arbs(sizing_USD, 1.05, false, false);
+    update_BC_matrix_Data(sizing_USD);
+
+    const successes = find_all_four_step_arbs(sizing_USD, min_successful_margin, false, true);
+    let tradeable_success = [];
     for (let play of successes) {
-        console.log(play);
+        if (tradeable(play)) {
+            console.log(play);
+            tradeable_success.push(play);
+        }
     }
+
     console.log("");
-    console.log("Found", successes.length, "plays fitting your criteria");
+    console.log("Found", tradeable_success.length, "plays fitting your criteria");
+
+    const params = {"sizing_USD": sizing_USD, "min_successful_margin": min_successful_margin};
+    const to_file = {"params": params, "successes": successes, "tradeable_successes": tradeable_success};
+    const filename = Date.now().toString() + "_success_trades.json";
+    Arb_Utils.write_to_file(filename, to_file);
 }
 
 log_plays();

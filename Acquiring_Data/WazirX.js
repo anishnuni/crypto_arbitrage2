@@ -33,7 +33,7 @@ async function update_wazirx_data() {
             market['asks'] = Utils.get_ordered_asks(asks);
             orderbooks.push(market);
         } catch {
-            console.log("Encountered issue when acquiring a WazirX Market", symbol);
+            console.log("Encountered issue when acquiring a WazirX Market", ticker);
         }
         i++;
         Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");

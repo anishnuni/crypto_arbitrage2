@@ -8,12 +8,19 @@ const binance_root = "https://api.binance.com/api/v3";
 // Uses Binance API and loops through
 // Took 6 minutes and 17 seconds on Sunday April 25th 3:30 am
 async function update_binance_data() {
+    // update_Binance_orderbooks();
+}
+
+update_binance_data();
+
+
+async function update_Binance_orderbooks() {
     const exchangeInfo = await Utils.get(binance_root, "/exchangeInfo");
-    // TODO fix after checking msg when it is not broken.
+
     const tradeable_markets = exchangeInfo["symbols"].filter((market) => (market["status"] === "TRADING"));
     const tradeable_tickers = tradeable_markets.map((market) =>
         ({"quote": market["quoteAsset"].toUpperCase(),
-           "base": market["baseAsset"].toUpperCase()
+            "base": market["baseAsset"].toUpperCase()
         }));
 
     let orderbooks = [];

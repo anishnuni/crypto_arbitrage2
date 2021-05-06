@@ -2,6 +2,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "ccxt": "^1.48.45",
+    "ccxws": "^0.43.1",
     "coingecko-api": "^1.0.10",
     "crypto": "^1.0.1",
     "request": "^2.88.2"

@@ -2,10 +2,18 @@ const ccxt = require('ccxt');
 const Utils = require('./Utils');
 
 const ftx = new ccxt.ftx({'enableRateLimit': true});
+const ftx_api_root = "https://ftx.com/api";
+
+
+async function update_ftx_data() {
+    update_FTX_orderbooks();
+    update_FTX_assets();
+}
+
 
 // Uses CCXT and loops through markets
 // ONLY SAVES SPOT MARKETS
-async function update_ftx_data() {
+async function update_FTX_orderbooks() {
     const markets = await ftx.fetchMarkets();
     const tradeable_spot_markets = markets.filter((market) =>
         (market['active'] && market['spot'] && market['info']['enabled']));
@@ -33,6 +41,18 @@ async function update_ftx_data() {
         Utils.log_exchange_progress(i / tradeable_spot_markets.length, "FTX");
     }
     Utils.write_to_file("FTX_Orderbooks.json", orderbooks, true);
+}
+
+async function update_FTX_assets() {
+    const assets = (await Utils.get(ftx_api_root, "/wallet/coins"))["result"];
+    let asset_data = [];
+    for (let asset of assets) {
+        let to_save = {};
+        to_save = {"symbol": asset["id"], "deposits_active": asset["canDeposit"], "withdrawals_active": asset["canWithdraw"]};
+        console.log(to_save);
+        asset_data.push(to_save);
+    }
+    Utils.write_to_file("FTX_Assets.json", asset_data, true);
 }
 
 

@@ -1,10 +1,38 @@
 const ccxt = require('ccxt');
 const Utils = require('./Utils');
+const Config = require('../config.json');
 
-const aax = new ccxt.aax({'enableRateLimit': true});
+const api_key = Config["AAX No Trade API"]["key"];
+const secret = Config["AAX No Trade API"]["secret"];
+
+const exchangeId = 'aax';
+const exchangeClass = ccxt[exchangeId];
+const aax = new exchangeClass ({
+    'apiKey': api_key,
+    'secret': secret,
+    'timeout': 30000,
+    'enableRateLimit': true,
+});
+
+
+// was not able to find a way to check if deposits/withdrawals are live.
+async function update_aax_data() {
+    update_aax_orderbooks();
+}
+
+
+// TODO @Grekko
+async function update_aax_withdraw_deposit_data() {
+    // API Query:
+}
+
 
 // Uses CCXT and loops through markets
-async function update_aax_data() {
+// Only includes markets that are actively trading
+// Does not look at maker/taker fees
+async function update_aax_orderbooks() {
+    const maintenance = await Utils.get("https://api.aax.com", "/v2/announcement/maintenance");
+
     const markets = await aax.fetchMarkets();
     const tradeable_markets = markets.filter((market) => (market['info']['status'] === "enable"));
     let orderbooks = [];
