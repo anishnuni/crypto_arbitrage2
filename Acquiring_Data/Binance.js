@@ -19,9 +19,16 @@ const binance_api_secret = Config["Binance NoTrade API"]['secret'];
 // Uses Binance API and loops through
 // Took 6 minutes and 17 seconds on Sunday April 25th 3:30 am
 async function update_binance_data() {
-    update_Binance_orderbooks();
-    update_Binance_assets();
+    while (!Utils.recently_updated_orderbooks("Binance")) {
+        await update_Binance_orderbooks();
+    }
+    Utils.log_completed_orderbooks("Binance");
+    while (!Utils.recently_updated_assets("Binance")) {
+        await update_Binance_assets();
+    }
+    Utils.log_completed_assets("Binance");
 }
+
 
 
 async function update_Binance_orderbooks() {
@@ -76,7 +83,6 @@ async function update_Binance_assets() {
         }
     };
     const assets = (await axios.get(`https://api.binance.com/sapi/v1/capital/config/getall?${params}`, options))['data'];
-
     let asset_data = [];
     for (let asset of assets) {
         const asset_networklist = asset["networkList"];
@@ -87,6 +93,7 @@ async function update_Binance_assets() {
     }
     Utils.write_to_file("Binance/Binance_Assets.json", asset_data, true);
 }
+
 
 
 module.exports = { update_binance_data }

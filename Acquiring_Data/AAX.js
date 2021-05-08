@@ -17,11 +17,14 @@ const aax = new exchangeClass ({
 
 // was not able to find a way to check if deposits/withdrawals are live.
 async function update_aax_data() {
-    update_aax_orderbooks();
+    while (!Utils.recently_updated_orderbooks("AAX")) {
+        await update_aax_orderbooks();
+    }
+    Utils.log_completed_orderbooks("AAX");
 }
 
 
-// TODO @Grekko
+// TODO add withdraw and deposit
 async function update_aax_withdraw_deposit_data() {
     // API Query:
 }

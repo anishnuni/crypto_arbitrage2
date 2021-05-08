@@ -32,11 +32,6 @@ function write_to_file(filename, data, log_finished_exchange) {
     const file = {"last_updated": current_unix, "data": data};
     const jsonString = JSON.stringify(file);
     fs.writeFileSync("./Saved_Data/" + filename, jsonString);
-    if (log_finished_exchange) {
-        console.log("");
-        console.log("Finished", filename);
-        console.log("");
-    }
 }
 
 
@@ -48,4 +43,58 @@ function set_union(set1, set2) {
     return union;
 }
 
-module.exports = { get, get_ordered_bids, get_ordered_asks, write_to_file, set_union, log_exchange_progress }
+
+function last_updated_orderbooks(exchange_name) {
+    try {
+        const path = "./Saved_Data/" + exchange_name + "/" + exchange_name + "_Orderbooks.json";
+        const file = JSON.parse(fs.readFileSync(path));
+        return file['last_updated'];
+    } catch {
+        return 0;
+    }
+}
+
+
+function last_updated_assets(exchange_name) {
+    try {
+        const path = "./Saved_Data/" + exchange_name + "/" + exchange_name + "_Assets.json";
+        const file = JSON.parse(fs.readFileSync(path));
+        return file['last_updated'];
+    } catch {
+        return 0;
+    }
+}
+
+
+// returns true if the exchange_name Orderbook has been updated
+// within the last 15 minutes
+function recently_updated_orderbooks(exchange_name) {
+    let current_unix = Math.floor(Date.now() / 1000);
+    return last_updated_orderbooks(exchange_name) > (current_unix - 900)
+}
+
+
+function recently_updated_assets(exchange_name) {
+    let current_unix = Math.floor(Date.now() / 1000);
+    return last_updated_assets(exchange_name) > (current_unix - 900)
+}
+
+
+function log_completed_orderbooks(exchange_name) {
+    const orderbooks_last_updated_unix = last_updated_orderbooks(exchange_name);
+    const orderbooks_last_updated_string = (new Date(orderbooks_last_updated_unix * 1000).toLocaleString());
+    console.log("");
+    console.log(exchange_name + " Orderbooks Done. Updated at", orderbooks_last_updated_string);
+    console.log("");
+}
+
+
+function log_completed_assets(exchange_name) {
+    const assets_last_updated_unix = last_updated_assets(exchange_name);
+    const assets_last_updated_string = (new Date(assets_last_updated_unix * 1000).toLocaleString());
+    console.log("");
+    console.log(exchange_name + " Assets Done. Updated at", assets_last_updated_string);
+    console.log("");
+}
+
+module.exports = {log_completed_orderbooks, log_completed_assets, last_updated_assets, last_updated_orderbooks, recently_updated_assets, recently_updated_orderbooks, get, get_ordered_bids, get_ordered_asks, write_to_file, set_union, log_exchange_progress }

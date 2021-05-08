@@ -11,8 +11,21 @@ function coindcx_get_assets(ticker) {
 }
 
 
-// download data for CoinDCX markets
+
 async function update_coindcx_data() {
+    while (!Utils.recently_updated_orderbooks("CoinDCX")) {
+        await update_CoinDCX_orderbooks();
+    }
+    Utils.log_completed_orderbooks("CoinDCX");
+    // while (!Utils.recently_updated_assets("CoinDCX")) {
+    //     await update_CoinDCX_assets();
+    // }
+    // Utils.log_completed_assets("CoinDCX");
+}
+
+
+// download data for CoinDCX markets
+async function update_CoinDCX_orderbooks() {
     const markets = await Utils.get("https://api.coindcx.com", "/exchange/v1/markets_details");
     const tradeable_markets = markets.filter((market) => (market["status"] === "active"))
     const tradeable_pairs = tradeable_markets.map(market => market['pair']);
@@ -49,6 +62,7 @@ async function update_coindcx_data() {
     }
     Utils.write_to_file("CoinDCX/CoinDCX_Orderbooks.json", orderbooks, true);
 }
+
 
 
 module.exports = { update_coindcx_data, coindcx_get_assets }

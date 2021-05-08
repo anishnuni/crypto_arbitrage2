@@ -3,11 +3,23 @@ const Wazir_root = "https://api.wazirx.com/api/v2";
 
 
 async function update_wazirx_data() {
+    while (!Utils.recently_updated_orderbooks("WazirX")) {
+        await update_WazirX_orderbooks();
+    }
+    Utils.log_completed_orderbooks("WazirX");
+    // while (!Utils.recently_updated_assets("WazirX")) {
+    //     await update_WazirX_assets();
+    // }
+    // Utils.log_completed_assets("WazirX");
+}
+
+
+async function update_WazirX_orderbooks() {
     const Wazir_overview = await Utils.get(Wazir_root, "/market-status");
     const tradeable_markets = Wazir_overview["markets"].filter((market) => (market["status"] === "active"));
     const tradeable_tickers = tradeable_markets.map((market) => (
         {"quote": market["quoteMarket"].toUpperCase(),
-          "base": market["baseMarket"].toUpperCase()
+            "base": market["baseMarket"].toUpperCase()
         }));
     const Wazir_assets = Wazir_overview["assets"];
 
@@ -40,6 +52,5 @@ async function update_wazirx_data() {
     }
     Utils.write_to_file("WazirX/WazirX_Orderbooks.json", orderbooks, true);
 }
-
 
 module.exports = { update_wazirx_data }

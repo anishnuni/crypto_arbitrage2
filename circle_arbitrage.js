@@ -7,12 +7,6 @@ const exchanges = Object.values(exchange_markets);
 
 // File is focused on finding circular arbitrage arbitrage anywhere they may exist.
 
-// Updates the BC_matrix.json file given the current saved orderbooks
-function update_BC_matrix_Data(sizing_USD) {
-    const bc_matrix = Loader.get_best_conversion_matrix(exchanges, exchange_names, sizing_USD);
-    Arb_Utils.write_to_file("bc_matrix.json", bc_matrix);
-}
-
 
 // return dictionary of trades with an exchange rate greater than 0.
 // Ex. valid_trades['ETH'] = ['USDT', 'BTC', 'UNI']
@@ -139,9 +133,6 @@ function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_BC_matri
                             let real_trades = trades.filter((trade) => (trade["exchange"] !== "None"));
                             let play = {"play_stats": {"margin": margin}, "trades": real_trades};
                             successes.push(play);
-                            if (tradeable(play)) {
-                                console.log(play);
-                            }
                         }
                     }
                 }
@@ -173,91 +164,6 @@ function test() {
 }
 
 
-function valid_trade(trade, blacklist) {
-    if (blacklist.includes(trade["start_asset"])) {
-        return false;
-    }
-    if (blacklist.includes(trade["end_asset"])) {
-        return false;
-    }
-    return true;
-}
-
-// Returns true if deposit works or asset file is not found.
-function deposit_works(exchange, asset_symbol) {
-    let assets = [];
-    try {
-        assets = Loader.load_exchange_assets(exchange);
-    } catch {
-        return true;
-    }
-    let matching_assets = assets.filter((asset) => (asset['symbol'] === asset_symbol));
-    for (let asset of matching_assets) {
-        if (asset["deposits_active"]) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-// Returns true if withdrawal works or asset file is not found.
-function withdrawal_works(exchange, asset_symbol) {
-    let assets = [];
-    try {
-        assets = Loader.load_exchange_assets(exchange);
-    } catch {
-        return true;
-    }
-    let matching_assets = assets.filter((asset) => (asset['symbol'] === asset_symbol));
-    for (let asset of matching_assets) {
-        if (asset["withdrawals_active"]) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-
-
-function tradeable(play) {
-    const general_blacklist = ["ETHBEAR"];
-    const Bittrex_blacklist = [];
-    // Checking that the play doesn't use any blacklisted assets
-    for (let trade of play["trades"]) {
-        if (!valid_trade(trade, general_blacklist)) {
-            return false;
-        }
-        if (trade["exchange"] === "Bittrex") {
-            if (!valid_trade(trade, Bittrex_blacklist)) {
-                return false;
-            }
-        }
-        if (trade["end_asset"] === "INR") {
-            return false;
-        }
-    }
-
-    // Checking that the deposits and withdrawals can actually be executed
-    for (let i = 0; i < (play["trades"].length - 1); i++) {
-        if (play["trades"][i]['exchange'] !== play["trades"][i + 1]['exchange']) {
-            if (!withdrawal_works(play["trades"][i]['exchange'], play["trades"][i]['end_asset'])) {
-                return false;
-            }
-            if (!deposit_works(play["trades"][i + 1]['exchange'], play["trades"][i + 1]['start_asset'])) {
-                return false;
-            }
-        }
-    }
-
-    if (play["trades"][0]["start_asset"] === "INR") {
-        return false;
-    }
-    return true;
-}
-
-
 function log_plays() {
     const sizing_USD = 1000;
     const min_successful_margin = 1.03;
@@ -272,12 +178,12 @@ function log_plays() {
 
     readline.question('Do you want to update_BC_matrix_Data? Type 1 for yes and 0 for no: ', res => {
         if (res == "1") {
-            update_BC_matrix_Data(sizing_USD);
+            Arb_Utils.update_BC_matrix_Data(sizing_USD);
         }
         const successes = find_all_four_step_arbs(sizing_USD, min_successful_margin, false, false);
         let tradeable_success = [];
         for (let play of successes) {
-            if (tradeable(play)) {
+            if (Arb_Utils.tradeable(play)) {
                 console.log(play);
                 tradeable_success.push(play);
             }

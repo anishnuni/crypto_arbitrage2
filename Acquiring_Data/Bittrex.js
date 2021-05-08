@@ -9,8 +9,14 @@ function bittrex_get_assets(ticker) {
 
 
 async function update_bittrex_data() {
-    update_Bittrex_orderbooks();
-    update_Bittrex_assets();
+    while (!Utils.recently_updated_orderbooks("Bittrex")) {
+        await update_Bittrex_orderbooks();
+    }
+    Utils.log_completed_orderbooks("Bittrex");
+    while (!Utils.recently_updated_assets("Bittrex")) {
+        await update_Bittrex_assets();
+    }
+    Utils.log_completed_assets("Bittrex");
 }
 
 

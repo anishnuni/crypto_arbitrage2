@@ -6,8 +6,14 @@ const ftx_api_root = "https://ftx.com/api";
 
 
 async function update_ftx_data() {
-    update_FTX_orderbooks();
-    update_FTX_assets();
+    while (!Utils.recently_updated_orderbooks("FTX")) {
+        await update_FTX_orderbooks();
+    }
+    Utils.log_completed_orderbooks("FTX");
+    while (!Utils.recently_updated_assets("FTX")) {
+        await update_FTX_assets();
+    }
+    Utils.log_completed_assets("FTX");
 }
 
 
@@ -49,7 +55,6 @@ async function update_FTX_assets() {
     for (let asset of assets) {
         let to_save = {};
         to_save = {"symbol": asset["id"], "deposits_active": asset["canDeposit"], "withdrawals_active": asset["canWithdraw"]};
-        console.log(to_save);
         asset_data.push(to_save);
     }
     Utils.write_to_file("FTX/FTX_Assets.json", asset_data, true);

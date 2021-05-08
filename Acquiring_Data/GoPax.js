@@ -4,8 +4,21 @@ const Utils = require('./Utils');
 const gopax = new ccxt.gopax({'enableRateLimit': true});
 const gopax_root = "https://api.gopax.co.kr";
 
-// Uses CCXT and loops through markets
+
 async function update_gopax_data() {
+    while (!Utils.recently_updated_orderbooks("GoPax")) {
+        await update_GoPax_orderbooks();
+    }
+    Utils.log_completed_orderbooks("GoPax");
+    // while (!Utils.recently_updated_assets("GoPax")) {
+    //     await update_GoPax_assets();
+    // }
+    // Utils.log_completed_assets("GoPax");
+}
+
+
+// Uses CCXT and loops through markets
+async function update_GoPax_orderbooks() {
     const markets = await gopax.fetchMarkets();
     const tradeable_markets = markets.filter((market) => (market['active']));
 
