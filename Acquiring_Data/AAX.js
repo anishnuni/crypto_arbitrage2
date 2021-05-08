@@ -15,17 +15,28 @@ const aax = new exchangeClass ({
 });
 
 
-// was not able to find a way to check if deposits/withdrawals are live.
 async function update_aax_data() {
     while (!Utils.recently_updated_orderbooks("AAX")) {
-        await update_aax_orderbooks();
+        try {
+            await update_AAX_orderbooks();
+        } catch {
+            console.log("Errored while trying to call AAX Orderbooks API. Trying Again...");
+        }
     }
     Utils.log_completed_orderbooks("AAX");
+    // while (!Utils.recently_updated_assets("AAX")) {
+    //     try {
+    //         await update_AAX_assets();
+    //     } catch {
+    //         console.log("Errored while trying to call AAX Assets API. Trying Again...")
+    //     }
+    // }
+    // Utils.log_completed_assets("AAX");
 }
 
 
 // TODO add withdraw and deposit
-async function update_aax_withdraw_deposit_data() {
+async function update_AAX_assets() {
     // API Query:
 }
 
@@ -33,7 +44,7 @@ async function update_aax_withdraw_deposit_data() {
 // Uses CCXT and loops through markets
 // Only includes markets that are actively trading
 // Does not look at maker/taker fees
-async function update_aax_orderbooks() {
+async function update_AAX_orderbooks() {
     const maintenance = await Utils.get("https://api.aax.com", "/v2/announcement/maintenance");
 
     const markets = await aax.fetchMarkets();
@@ -59,7 +70,7 @@ async function update_aax_orderbooks() {
         orderbooks.push(to_save);
 
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "AAX");
+        // Utils.log_exchange_progress(i / tradeable_markets.length, "AAX");
     }
     Utils.write_to_file("AAX/AAX_Orderbooks.json", orderbooks, true);
 }

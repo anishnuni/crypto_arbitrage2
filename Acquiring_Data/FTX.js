@@ -7,11 +7,19 @@ const ftx_api_root = "https://ftx.com/api";
 
 async function update_ftx_data() {
     while (!Utils.recently_updated_orderbooks("FTX")) {
-        await update_FTX_orderbooks();
+        try {
+            await update_FTX_orderbooks();
+        } catch {
+            console.log("Errored while trying to call FTX Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("FTX");
     while (!Utils.recently_updated_assets("FTX")) {
-        await update_FTX_assets();
+        try {
+            await update_FTX_assets();
+        } catch {
+            console.log("Errored while trying to call FTX Assets API. Trying Again...")
+        }
     }
     Utils.log_completed_assets("FTX");
 }
@@ -44,7 +52,7 @@ async function update_FTX_orderbooks() {
         orderbooks.push(to_save);
 
         i++;
-        Utils.log_exchange_progress(i / tradeable_spot_markets.length, "FTX");
+        // Utils.log_exchange_progress(i / tradeable_spot_markets.length, "FTX");
     }
     Utils.write_to_file("FTX/FTX_Orderbooks.json", orderbooks, true);
 }

@@ -10,11 +10,19 @@ function bittrex_get_assets(ticker) {
 
 async function update_bittrex_data() {
     while (!Utils.recently_updated_orderbooks("Bittrex")) {
-        await update_Bittrex_orderbooks();
+        try {
+            await update_Bittrex_orderbooks();
+        } catch {
+            console.log("Errored while trying to call Bittrex Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("Bittrex");
     while (!Utils.recently_updated_assets("Bittrex")) {
-        await update_Bittrex_assets();
+        try {
+            await update_Bittrex_assets();
+        } catch {
+            console.log("Errored while trying to call Bittrex Assets API. Trying Again...")
+        }
     }
     Utils.log_completed_assets("Bittrex");
 }
@@ -46,7 +54,7 @@ async function update_Bittrex_orderbooks() {
         orderbooks.push(to_save);
 
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "Bittrex");
+        // Utils.log_exchange_progress(i / tradeable_markets.length, "Bittrex");
     }
     Utils.write_to_file("Bittrex/Bittrex_Orderbooks.json", orderbooks, true);
 }

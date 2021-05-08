@@ -4,11 +4,19 @@ const Wazir_root = "https://api.wazirx.com/api/v2";
 
 async function update_wazirx_data() {
     while (!Utils.recently_updated_orderbooks("WazirX")) {
-        await update_WazirX_orderbooks();
+        try {
+            await update_WazirX_orderbooks();
+        } catch {
+            console.log("Errored while trying to call WazirX Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("WazirX");
     // while (!Utils.recently_updated_assets("WazirX")) {
-    //     await update_WazirX_assets();
+    //     try {
+    //         await update_WazirX_assets();
+    //     } catch {
+    //         console.log("Errored while trying to call WazirX Assets API. Trying Again...")
+    //     }
     // }
     // Utils.log_completed_assets("WazirX");
 }
@@ -48,7 +56,7 @@ async function update_WazirX_orderbooks() {
             console.log("Encountered issue when acquiring a WazirX Market", ticker);
         }
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");
+        // Utils.log_exchange_progress(i / tradeable_markets.length, "WazirX");
     }
     Utils.write_to_file("WazirX/WazirX_Orderbooks.json", orderbooks, true);
 }

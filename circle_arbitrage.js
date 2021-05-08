@@ -8,22 +8,6 @@ const exchanges = Object.values(exchange_markets);
 // File is focused on finding circular arbitrage arbitrage anywhere they may exist.
 
 
-// return dictionary of trades with an exchange rate greater than 0.
-// Ex. valid_trades['ETH'] = ['USDT', 'BTC', 'UNI']
-// means that ETH can be traded for more than 0 USDT, BTC or ETH
-function get_valid_trades(bc_matrix) {
-    const known_assets = Object.keys(bc_matrix)
-    let valid_trades = {};
-    for (let start_asset of known_assets) {
-        // all exchange rates for start_asset:
-        let asset_exchanges = bc_matrix[start_asset];
-        // all assets that start_asset can be exchanged to with an exchange rate > 0
-        let exchangeable_to = Object.keys(asset_exchanges).filter(end_asset => (asset_exchanges[end_asset] > 0));
-        valid_trades[start_asset] = exchangeable_to;
-    }
-    return valid_trades;
-}
-
 function log_trades(trades) {
     let to_log = trades[0]["start_asset_n"] + " " + trades[0]["start_asset"];
     for (let trade of trades.slice(1, trades.length)) {
@@ -35,10 +19,10 @@ function log_trades(trades) {
 
 
 // ...
-function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix_progress, log_all_trades) {
+function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_all_trades) {
     const bc_matrix = Loader.load_data("bc_matrix.json");
     console.log("Finding Three Step Arbs...");
-    const valid_trades = get_valid_trades(bc_matrix);
+    const valid_trades = Arb_Utils.get_valid_trades(bc_matrix);
 
     // all assets that can be traded at the given sizing_USD:
     const tradeable_assets = Object.keys(valid_trades).filter(asset => (valid_trades[asset].length > 0));
@@ -74,7 +58,6 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
                         let real_trades = trades.filter((trade) => (trade["exchange"] !== "None"));
                         let play = {"play_stats": {"margin": margin}, "trades": real_trades};
                         successes.push(play);
-                        console.log(play);
                     }
                 }
                 if (log_all_trades) {
@@ -90,10 +73,10 @@ function find_all_three_step_arbs(sizing_USD, min_successful_margin, log_BC_matr
 
 
 // ...
-function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_BC_matrix_progress, log_all_trades) {
+function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_all_trades) {
     const bc_matrix = Loader.load_data("bc_matrix.json");
     console.log("Finding Four Step Arbs...");
-    const valid_trades = get_valid_trades(bc_matrix);
+    const valid_trades = Arb_Utils.get_valid_trades(bc_matrix);
 
     // all assets that can be traded at the given sizing_USD:
     const tradeable_assets = Object.keys(valid_trades).filter(asset => (valid_trades[asset].length > 0));
@@ -148,25 +131,39 @@ function find_all_four_step_arbs(sizing_USD, min_successful_margin, log_BC_matri
 }
 
 
+// max_length can only be 3 or 4
+async function run_arbs(sizing_USD, min_return, max_length) {
+    let successes = [];
+    let length_string = "";
+    if (max_length === 3) {
+        successes = find_all_three_step_arbs(sizing_USD, min_return, false);
+        length_string = "three";
+    } else if (max_length === 4) {
+        successes = find_all_four_step_arbs(sizing_USD, min_return,  false);
+        length_string = "four";
+    } else {
+        throw Error("Invalid Max Length");
+    }
+    let tradeable_success = [];
+    for (let play of successes) {
+        if (Arb_Utils.tradeable(play)) {
+            tradeable_success.push(play);
+        }
+    }
 
+    console.log("");
+    console.log("Found", tradeable_success.length, length_string, "step arbs fitting your criteria");
 
-function test() {
-    const sizing_USD = 1000;
-    const BTC_price = Loader.best_conversion(exchanges, exchange_names, "BTC", 0.5, "USDT")['end_asset_n'] / 0.5;
-    const ETH_price = Loader.best_conversion(exchanges, exchange_names, "ETH", 1, "USDT")['end_asset_n'];
-
-    // How much of the asset will you get if you convert sizing_USD worth of BTC into the asset
-    let n_BTC = Loader.best_conversion(exchanges, exchange_names, "BTC", sizing_USD / BTC_price, "MLN")['end_asset_n'];
-
-    // How much of the asset will you get if you convert sizing_USD worth of ETH into the asset
-    let n_ETH = Loader.best_conversion(exchanges, exchange_names, "ETH", sizing_USD / ETH_price, "MLN")['end_asset_n'];
-    console.log(n_BTC, n_ETH);
+    const params = {"sizing_USD": sizing_USD, "min_successful_margin": min_return};
+    const to_file = {"params": params, "successes": successes, "tradeable_successes": tradeable_success};
+    const filename = Date.now().toString() + "_" + length_string + "_successes.json";
+    Arb_Utils.write_to_file("Plays/" + filename, to_file);
 }
 
 
 function log_plays() {
     const sizing_USD = 1000;
-    const min_successful_margin = 1.03;
+    const min_return = 1.03;
 
     Arb_Utils.print_exchange_updated_times(exchange_names);
 
@@ -180,12 +177,14 @@ function log_plays() {
         if (res == "1") {
             Arb_Utils.update_BC_matrix_Data(sizing_USD);
         }
-        const successes = find_all_four_step_arbs(sizing_USD, min_successful_margin, false, false);
+        const successes = find_all_four_step_arbs(sizing_USD, min_return,  false);
         let tradeable_success = [];
+        let unique_assets = new Set();
         for (let play of successes) {
             if (Arb_Utils.tradeable(play)) {
                 console.log(play);
                 tradeable_success.push(play);
+                unique_assets = update_unique_assets(unique_assets, play)
             }
         }
 
@@ -199,4 +198,4 @@ function log_plays() {
     });
 }
 
-log_plays();
+module.exports = { run_arbs }

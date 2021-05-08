@@ -220,6 +220,7 @@ function get_best_conversion_matrix(exchanges, exchange_names, sizing_USD, log_p
     return bc_matrix;
 }
 
+
 // Given one asset in a market get the second one
 function get_asset_2(market, asset_1) {
     if (market['quote'] === asset_1) {
@@ -228,6 +229,7 @@ function get_asset_2(market, asset_1) {
         return market['quote'];
     }
 }
+
 
 function load_all_exchanges() {
     return {

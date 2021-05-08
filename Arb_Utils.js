@@ -5,6 +5,7 @@ const exchange_markets = Loader.load_all_tradeable_exchanges();
 const exchange_names = Object.keys(exchange_markets);
 const exchanges = Object.values(exchange_markets);
 
+
 function write_to_file(filename, data) {
     const file = {"data": data};
     const jsonString = JSON.stringify(file);
@@ -52,6 +53,7 @@ function blacklisted(trade, blacklist) {
     return start_asset_blacklisted || end_asset_blacklisted;
 }
 
+
 // Returns true if deposit works for the exchange and asset_symbol
 // or asset file is not found.
 function deposit_works(exchange, asset_symbol) {
@@ -89,10 +91,13 @@ function withdrawal_works(exchange, asset_symbol) {
     return false;
 }
 
+
 // The function will return true if none of hte trades include assets on the blacklist
 // And any necessary deposits and withdrawals will work. Otherwise, returns false.
 function tradeable(play) {
     const general_blacklist = ["ETHBEAR"];
+    // The coin Bittrex calls PROS is different than what others call PROS
+    const general_Bittrex_blacklist = ["PROS"];
     const American_Bittrex_blacklist = ["PROS", "YFL", "XYM", "IOTX",
         "QTUM", "IRIS", "TWTR", "TSM", "TSLA", "SQ", "SPY", "AVAX"];
     // Checking that the play doesn't use any blacklisted assets
@@ -101,7 +106,7 @@ function tradeable(play) {
             return false;
         }
         if (trade["exchange"] === "Bittrex") {
-            if (blacklisted(trade, ["PROS", "AVAX"])) {
+            if (blacklisted(trade, general_Bittrex_blacklist)) {
                 return false;
             }
         }
@@ -128,4 +133,22 @@ function tradeable(play) {
     return true;
 }
 
-module.exports = { write_to_file, last_updated, print_exchange_updated_times, update_BC_matrix_Data, tradeable }
+
+// return dictionary of trades with an exchange rate greater than 0.
+// Ex. valid_trades['ETH'] = ['USDT', 'BTC', 'UNI']
+// means that ETH can be traded for more than 0 USDT, BTC or UNI
+function get_valid_trades(bc_matrix) {
+    const known_assets = Object.keys(bc_matrix)
+    let valid_trades = {};
+    for (let start_asset of known_assets) {
+        // all exchange rates for start_asset:
+        let asset_exchanges = bc_matrix[start_asset];
+        // all assets that start_asset can be exchanged to with an exchange rate > 0
+        let exchangeable_to = Object.keys(asset_exchanges).filter(end_asset => (asset_exchanges[end_asset] > 0));
+        valid_trades[start_asset] = exchangeable_to;
+    }
+    return valid_trades;
+}
+
+
+module.exports = { get_valid_trades, write_to_file, last_updated, print_exchange_updated_times, update_BC_matrix_Data, tradeable }

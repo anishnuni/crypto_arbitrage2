@@ -10,7 +10,7 @@ async function get(root, path) {
 
 
 function log_exchange_progress(percent, exchange_name) {
-    if (((Math.round(percent*100) % 10) === 0) || ((Math.round(percent*100) % 10) === 5)) {
+    if (((Math.round(percent*100) % 10) === 0)) {
         let percent_done = ((100 * percent).toFixed(3));
         console.log(percent_done.toString() + "%", "done with", exchange_name, "Data");
     }
@@ -28,7 +28,7 @@ function get_ordered_asks(asks) {
 }
 
 // write to a file in the Saved_Data folder
-function write_to_file(filename, data, log_finished_exchange) {
+function write_to_file(filename, data) {
     const file = {"last_updated": current_unix, "data": data};
     const jsonString = JSON.stringify(file);
     fs.writeFileSync("./Saved_Data/" + filename, jsonString);
@@ -66,17 +66,18 @@ function last_updated_assets(exchange_name) {
 }
 
 
-// returns true if the exchange_name Orderbook has been updated
-// within the last 15 minutes
+// returns true if the exchange_name's orderbook has been updated
+// within the last 10 minutes
 function recently_updated_orderbooks(exchange_name) {
     let current_unix = Math.floor(Date.now() / 1000);
-    return last_updated_orderbooks(exchange_name) > (current_unix - 900)
+    return last_updated_orderbooks(exchange_name) > (current_unix - 600)
 }
 
-
+// returns true if the exchange_name assets has been updated
+// within the last 10 minutes
 function recently_updated_assets(exchange_name) {
     let current_unix = Math.floor(Date.now() / 1000);
-    return last_updated_assets(exchange_name) > (current_unix - 900)
+    return last_updated_assets(exchange_name) > (current_unix - 600)
 }
 
 

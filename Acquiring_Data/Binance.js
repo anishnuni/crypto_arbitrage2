@@ -20,11 +20,19 @@ const binance_api_secret = Config["Binance NoTrade API"]['secret'];
 // Took 6 minutes and 17 seconds on Sunday April 25th 3:30 am
 async function update_binance_data() {
     while (!Utils.recently_updated_orderbooks("Binance")) {
-        await update_Binance_orderbooks();
+        try {
+            await update_Binance_orderbooks();
+        } catch {
+            console.log("Errored while trying to call Binance Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("Binance");
     while (!Utils.recently_updated_assets("Binance")) {
-        await update_Binance_assets();
+        try {
+            await update_Binance_assets();
+        } catch {
+            console.log("Errored while trying to call Binance Assets API. Trying Again...")
+        }
     }
     Utils.log_completed_assets("Binance");
 }
@@ -63,7 +71,7 @@ async function update_Binance_orderbooks() {
             console.log("Failed on get", binance_api_root, "/api/v3/depth?symbol=" + market['base'] + market['quote']);
         }
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "Binance");
+        // Utils.log_exchange_progress(i / tradeable_markets.length, "Binance");
     }
     Utils.write_to_file("Binance/Binance_Orderbooks.json", orderbooks, true);
 }

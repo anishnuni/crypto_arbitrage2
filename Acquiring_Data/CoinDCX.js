@@ -14,11 +14,19 @@ function coindcx_get_assets(ticker) {
 
 async function update_coindcx_data() {
     while (!Utils.recently_updated_orderbooks("CoinDCX")) {
-        await update_CoinDCX_orderbooks();
+        try {
+            await update_CoinDCX_orderbooks();
+        } catch {
+            console.log("Errored while trying to call CoinDCX Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("CoinDCX");
     // while (!Utils.recently_updated_assets("CoinDCX")) {
-    //     await update_CoinDCX_assets();
+    //     try {
+    //         await update_CoinDCX_assets();
+    //     } catch {
+    //         console.log("Errored while trying to call CoinDCX Assets API. Trying Again...")
+    //     }
     // }
     // Utils.log_completed_assets("CoinDCX");
 }
@@ -58,7 +66,7 @@ async function update_CoinDCX_orderbooks() {
         orderbooks.push(market);
 
         i++;
-        Utils.log_exchange_progress(i / tradeable_markets.length, "CoinDCX");
+        // Utils.log_exchange_progress(i / tradeable_markets.length, "CoinDCX");
     }
     Utils.write_to_file("CoinDCX/CoinDCX_Orderbooks.json", orderbooks, true);
 }

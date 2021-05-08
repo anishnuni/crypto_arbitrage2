@@ -10,11 +10,19 @@ function kucoin_get_assets(ticker) {
 
 async function update_kucoin_data() {
     while (!Utils.recently_updated_orderbooks("KuCoin")) {
-        await update_KuCoin_orderbooks();
+        try {
+            await update_KuCoin_orderbooks();
+        } catch {
+            console.log("Errored while trying to call KuCoin Orderbooks API. Trying Again...")
+        }
     }
     Utils.log_completed_orderbooks("KuCoin");
     while (!Utils.recently_updated_assets("KuCoin")) {
-        await update_KuCoin_assets();
+        try {
+            await update_KuCoin_assets();
+        } catch {
+            console.log("Errored while trying to call KuCoin Assets API. Trying Again...")
+        }
     }
     Utils.log_completed_assets("KuCoin");
 }
